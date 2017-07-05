@@ -21,7 +21,7 @@
 
         #region .ctor
 
-        public JsonExpressionParser()
+        public JsonExpressionParser(params Function[] functions)
         {
             var dateTime = Parse.Regex(@"[0-9]{4}-[0-9]{2}-[0-9]{2}")
                 .Select(s => Expression.Constant(DateTime.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal)));
@@ -63,6 +63,7 @@
                 MakeBinaryForDoubles);
 
             this.functions.Add(new IF());
+            this.functions.AddRange(functions);
         }
 
         #endregion

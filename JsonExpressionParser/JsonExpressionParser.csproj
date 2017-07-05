@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IF.cs" />
     <Compile Include="JsonExpressionParser.cs" />
     <Compile Include="JsonExpressionParserContext.cs" />
     <Compile Include="JsonExpressionParserException.cs" />

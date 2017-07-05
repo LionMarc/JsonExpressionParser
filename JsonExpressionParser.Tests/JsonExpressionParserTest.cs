@@ -1,6 +1,8 @@
 ﻿namespace JsonExpressionParser
 {
     using System;
+    using System.Linq.Expressions;
+    using System.Reflection;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Newtonsoft.Json.Linq;
 
@@ -642,6 +644,21 @@
             Assert.AreEqual(123.456, result, 1E-10);
         }
 
+        [TestMethod]
+        public void Should_execute_the_userdefined_pow_function_when_registered_into_the_parser()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>(new Pow());
+
+            var expression = "Pow(7, 2)";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(49.0, result, 1E-10);
+        }
+
         #endregion
 
         #region Errors Tests
@@ -681,6 +698,24 @@
             var exception = Assert.ThrowsException<JsonExpressionParserException>(() => jsonExpressionParser.CreateFuncFromExpression<string>(expression));
 
             Assert.AreEqual("There is no function with name 'ApplyForex'", exception.Message);
+        }
+
+        #endregion
+
+        #region Nested Classes
+
+        private class Pow : Function
+        {
+            public Pow() : base("Pow")
+            {
+            }
+
+            public override Expression CreateExpression(Expression[] parameters)
+            {
+                return Expression.Call(
+                    typeof(Math).GetMethod("Pow", BindingFlags.Static | BindingFlags.Public),
+                    parameters);
+            }
         }
 
         #endregion
