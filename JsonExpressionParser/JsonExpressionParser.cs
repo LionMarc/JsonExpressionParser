@@ -34,10 +34,15 @@
                          .XOr(number)
                          .XOr(jsonInputField);
 
+            var innerExpr = Parse.ChainOperator(
+                Operator("*", ExpressionType.MultiplyChecked).Or(Operator("/", ExpressionType.Divide)),
+                this.term,
+                MakeBinaryForDoubles);
+
             this.Expr = Parse.ChainOperator(
                 Operator("+", ExpressionType.AddChecked).Or(Operator("-", ExpressionType.SubtractChecked)),
-                this.term,
-                MakeBinary);
+                innerExpr,
+                MakeBinaryForDoubles);
         }
 
         #endregion
@@ -57,6 +62,14 @@
         #endregion
 
         #region Helper Methods
+
+        private static Expression MakeBinaryForDoubles(ExpressionType type, Expression left, Expression right)
+        {
+            return Expression.MakeBinary(
+                type,
+                Expression.Convert(left, typeof(double)),
+                Expression.Convert(right, typeof(double)));
+        }
 
         private static Expression MakeBinary(ExpressionType type, Expression left, Expression right)
         {

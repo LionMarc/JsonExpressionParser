@@ -25,6 +25,7 @@
     'currency':'EUR',
     'realAskPrice':123.456,
     'realBidPrice':118.987,
+    'forex': 1.23,
     'nested':{
         'string':'StringType',
         'double':4.56,
@@ -161,6 +162,21 @@
         }
 
         [TestMethod]
+        public void Should_sum_the_two_double_fields()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realBidPrice + $.realAskPrice";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(242.443, result, 1E-10);
+        }
+
+        [TestMethod]
         public void Should_substract_the_constant_value_from_the_double_field()
         {
             var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
@@ -188,6 +204,231 @@
             var result = func(context);
 
             Assert.AreEqual(18.544, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_substract_the_two_double_fields()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realAskPrice - $.realBidPrice";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(4.469, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_multiply_the_double_field_by_the_constant_value_when_constant_is_at_right()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realAskPrice * 2.5";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(308.64, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_multiply_the_double_field_by_the_constant_value_when_constant_is_at_left()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "2.5 * $.realAskPrice";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(308.64, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_multiply_the_two_double_fields()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realAskPrice * $.forex";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(151.85088, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_divide_the_double_field_by_the_constant_value_when_constant_is_at_right()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realAskPrice / 2.5";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(49.3824, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_divide_the_double_field_by_the_constant_value_when_constant_is_at_left()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "2.5 / $.realAskPrice";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(0.0202501296, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_divide_the_two_double_fields()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realAskPrice / $.forex";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(100.3707317073, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_apply_multiplication_before_addition()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "4 + 3 * 2";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(10.0, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_apply_multiplication_after_addition_when_addition_is_inside_parenthesis()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "(4 + 3) * 2";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(14.0, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_apply_division_before_addition()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "4 + 3 / 2";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(5.5, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_apply_division_after_addition_when_addition_is_inside_parenthesis()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "(4 + 3) / 2";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(3.5, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_apply_multiplication_before_substraction()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "4 - 3 * 2";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(-2.0, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_apply_multiplication_after_substraction_when_substraction_is_inside_parenthesis()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "(4 - 3) * 2";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(2.0, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_apply_division_before_substraction()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "4 - 3 / 2";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(2.5, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_apply_division_after_substraction_when_substraction_is_inside_parenthesis()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "(4 - 3) / 2";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(0.5, result, 1E-10);
         }
 
         #endregion
