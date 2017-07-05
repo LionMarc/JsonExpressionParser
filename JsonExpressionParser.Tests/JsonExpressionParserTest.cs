@@ -612,6 +612,36 @@
             Assert.IsFalse(result);
         }
 
+        [TestMethod]
+        public void Should_return_first_item_when_calling_IF_function_with_a_condition_evaluated_to_true()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "IF($.date < 2017-07-05,69.3, $.realAskPrice)";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(69.3, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_return_second_item_when_calling_IF_function_with_a_condition_evaluated_to_false()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "IF($.date < 2017-07-03,69.3, $.realAskPrice)";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.AreEqual(123.456, result, 1E-10);
+        }
+
         #endregion
 
         #region Errors Tests
@@ -639,6 +669,18 @@
             var exception = Assert.ThrowsException<JsonExpressionParserException>(() => jsonExpressionParser.CreateFuncFromExpression<string>(expression));
 
             Assert.AreEqual("Parsing error of the expression '$.currency + 4.0'", exception.Message);
+        }
+
+        [TestMethod]
+        public void Should_throw_a_JsonExpressionParserException_when_using_a_not_defined_function()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "ApplyForex($.realAskPrice,$.currency,'USD')";
+
+            var exception = Assert.ThrowsException<JsonExpressionParserException>(() => jsonExpressionParser.CreateFuncFromExpression<string>(expression));
+
+            Assert.AreEqual("There is no function with name 'ApplyForex'", exception.Message);
         }
 
         #endregion

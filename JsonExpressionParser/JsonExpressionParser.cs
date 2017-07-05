@@ -1,7 +1,9 @@
 ﻿namespace JsonExpressionParser
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
+    using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
     using Newtonsoft.Json.Linq;
@@ -12,9 +14,8 @@
         #region Fields
 
         private readonly ParameterExpression currentContextExpression = Expression.Parameter(typeof(TContext));
-        private readonly Parser<Expression> Expr;
-
-        private readonly Parser<Expression> term;
+        private readonly Parser<Expression> expression;
+        private readonly List<Function> functions = new List<Function>();
 
         #endregion
 
@@ -26,20 +27,29 @@
                 .Select(s => Expression.Constant(DateTime.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal)));
             var number = Parse.DecimalInvariant
                .Select(x => Expression.Constant(double.Parse(x, CultureInfo.InvariantCulture)));
+            var @string = Parse.RegexMatch(@"'(.*)'").Select(s => Expression.Constant(s.Groups[1].Value));
             var jsonInputField = Parse.Regex(@"\$(\.[a-zA-Z][a-zA-Z0-9]*)*")
                 .Select(s => this.GenerateExpressionForJsonField(s));
+            var functionCall =
+                from name in Parse.Letter.AtLeastOnce().Text()
+                from left in Parse.Char('(')
+                from expressions in Parse.Ref(() => expression).DelimitedBy(Parse.Char(',').Token())
+                from right in Parse.Char(')')
+                select this.GenerateExpressionForFunctionCall(name, expressions.ToArray());
 
-            this.term = (from lparen in Parse.Char('(')
-                         from expr in Parse.Ref(() => Expr)
-                         from rparen in Parse.Char(')')
-                         select expr).Named("expression")
+            var term = (from lparen in Parse.Char('(')
+                        from expr in Parse.Ref(() => expression)
+                        from rparen in Parse.Char(')')
+                        select expr).Named("expression")
                          .XOr(dateTime)
                          .XOr(number)
-                         .XOr(jsonInputField);
+                         .XOr(@string)
+                         .XOr(jsonInputField)
+                         .XOr(functionCall);
 
             var innerExpr = Parse.ChainOperator(
                 Operator("<", ExpressionType.LessThan),
-                this.term,
+                term,
                 MakeBinary);
 
             innerExpr = Parse.ChainOperator(
@@ -47,10 +57,12 @@
                 innerExpr,
                 MakeBinaryForDoubles);
 
-            this.Expr = Parse.ChainOperator(
+            this.expression = Parse.ChainOperator(
                 Operator("+", ExpressionType.AddChecked).Or(Operator("-", ExpressionType.SubtractChecked)),
                 innerExpr,
                 MakeBinaryForDoubles);
+
+            this.functions.Add(new IF());
         }
 
         #endregion
@@ -61,12 +73,12 @@
         {
             try
             {
-                return this.Expr.End()
+                return this.expression.End()
                     .Select(body => Expression.Lambda<Func<TContext, TResultType>>(Expression.Convert(body, typeof(TResultType)), this.currentContextExpression))
                     .Parse(expression)
                     .Compile();
             }
-            catch (Exception e)
+            catch (Exception e) when (e.GetType() != typeof(JsonExpressionParserException))
             {
                 throw new JsonExpressionParserException($"Parsing error of the expression '{expression}'", e);
             }
@@ -137,6 +149,17 @@
                 methodInfo,
                 Expression.Constant(jsonPath),
                 this.currentContextExpression);
+        }
+
+        private Expression GenerateExpressionForFunctionCall(string functionName, Expression[] parameters)
+        {
+            var function = this.functions.Find(m => m.Name == functionName);
+            if (function == null)
+            {
+                throw new JsonExpressionParserException($"There is no function with name '{functionName}'");
+            }
+
+            return function.CreateExpression(parameters);
         }
 
         #endregion
