@@ -6,16 +6,6 @@
     using Newtonsoft.Json.Linq;
     using Sprache;
 
-    public class JsonExpressionParserContext
-    {
-        public JsonExpressionParserContext(JObject current)
-        {
-            this.Current = current;
-        }
-
-        public JObject Current { get; private set; }
-    }
-
     public class JsonExpressionParser<TContext> where TContext : JsonExpressionParserContext
     {
         #region Fields
