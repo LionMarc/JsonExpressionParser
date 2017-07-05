@@ -21,6 +21,7 @@
             var jsonData = @"
 {
     'date':'2017-07-04T00:00:00Z',
+    'effectiveDate':'2017-07-05T00:00:00Z',
     'code':'code001',
     'currency':'EUR',
     'realAskPrice':123.456,
@@ -429,6 +430,186 @@
             var result = func(context);
 
             Assert.AreEqual(0.5, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_return_true_when_double_field_is_less_than_constant_number()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realAskPrice < 130.0";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void Should_return_false_when_double_field_is_greater_than_constant_number()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realAskPrice < 110.0";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void Should_return_true_when_constant_number_is_less_than_double_field()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "110.0 < $.realAskPrice";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void Should_return_false_when_constant_number_is_greater_than_double_field()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "130.0 < $.realAskPrice";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void Should_return_true_when_datetime_field_is_less_than_constant_datetime()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.date < 2017-07-05";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void Should_return_false_when_datetime_field_is_greater_than_constant_datetime()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.date < 2017-07-03";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void Should_return_true_when_constant_datetime_is_less_than_datetime_field()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "2017-07-03 < $.date";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void Should_return_false_when_constant_datetime_is_greater_than_datetime_field()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "2017-07-05 < $.date";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void Should_return_true_when_left_double_field_is_less_than_right_double_field()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realBidPrice < $.realAskPrice";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void Should_return_false_when_left_double_field_is_greater_than_right_double_field()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.realAskPrice < $.realBidPrice";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void Should_return_true_when_left_datetime_field_is_less_than_right_datetime_field()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.date < $.effectiveDate";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void Should_return_false_when_left_datetime_field_is_greater_than_right_datetime_field()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.effectiveDate < $.date";
+            var func = jsonExpressionParser.CreateFuncFromExpression<bool>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+
+            var result = func(context);
+
+            Assert.IsFalse(result);
         }
 
         #endregion

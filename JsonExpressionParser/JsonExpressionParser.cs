@@ -22,8 +22,10 @@
 
         public JsonExpressionParser()
         {
+            var dateTime = Parse.Regex(@"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+                .Select(s => Expression.Constant(DateTime.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal)));
             var number = Parse.DecimalInvariant
-                .Select(x => Expression.Constant(double.Parse(x, CultureInfo.InvariantCulture)));
+               .Select(x => Expression.Constant(double.Parse(x, CultureInfo.InvariantCulture)));
             var jsonInputField = Parse.Regex(@"\$(\.[a-zA-Z][a-zA-Z0-9]*)*")
                 .Select(s => this.GenerateExpressionForJsonField(s));
 
@@ -31,12 +33,18 @@
                          from expr in Parse.Ref(() => Expr)
                          from rparen in Parse.Char(')')
                          select expr).Named("expression")
+                         .XOr(dateTime)
                          .XOr(number)
                          .XOr(jsonInputField);
 
             var innerExpr = Parse.ChainOperator(
-                Operator("*", ExpressionType.MultiplyChecked).Or(Operator("/", ExpressionType.Divide)),
+                Operator("<", ExpressionType.LessThan),
                 this.term,
+                MakeBinary);
+
+            innerExpr = Parse.ChainOperator(
+                Operator("*", ExpressionType.MultiplyChecked).Or(Operator("/", ExpressionType.Divide)),
+                innerExpr,
                 MakeBinaryForDoubles);
 
             this.Expr = Parse.ChainOperator(
@@ -78,6 +86,20 @@
 
         private static Expression MakeBinary(ExpressionType type, Expression left, Expression right)
         {
+            if (type == ExpressionType.LessThan)
+            {
+                return Expression.Condition(
+                    Expression.LessThan(
+                        Expression.Call(
+                            Expression.Convert(left, typeof(IComparable)),
+                            typeof(IComparable).GetMethod("CompareTo"),
+                            Expression.Convert(right, typeof(IComparable))),
+                        Expression.Constant(0)),
+                    Expression.Constant(true),
+                    Expression.Constant(false));
+            }
+
+            // TODO - Remove this code when all type of binary expression are implemented if this code is not useful
             if (left.Type != typeof(object))
             {
                 return Expression.MakeBinary(
