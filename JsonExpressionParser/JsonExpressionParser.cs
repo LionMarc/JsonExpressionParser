@@ -6,6 +6,7 @@
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
+    using System.Text.RegularExpressions;
     using Newtonsoft.Json.Linq;
     using Sprache;
 
@@ -30,6 +31,8 @@
             var @string = Parse.RegexMatch(@"'(.*)'").Select(s => Expression.Constant(s.Groups[1].Value));
             var jsonInputField = Parse.Regex(@"\$(\.[a-zA-Z][a-zA-Z0-9]*)*")
                 .Select(s => this.GenerateExpressionForJsonField(s));
+            var variable = Parse.RegexMatch(@"\$([a-zA-Z][a-zA-Z0-9]*)(\.[a-zA-Z][a-zA-Z0-9]*)*")
+                .Select(s => this.GenerateExpressionForVariable(s));
             var functionCall =
                 from name in Parse.Letter.AtLeastOnce().Text()
                 from left in Parse.Char('(')
@@ -44,6 +47,7 @@
                          .XOr(dateTime)
                          .XOr(number)
                          .XOr(@string)
+                         .XOr(variable)
                          .XOr(jsonInputField)
                          .XOr(functionCall);
 
@@ -143,6 +147,23 @@
             return ((JValue)value.Value<object>()).Value;
         }
 
+        private static object GetVariable(string variableName, string jsonPath, TContext context)
+        {
+            var variable = context.Variables.FirstOrDefault(v => v.Name == variableName);
+            if (variable == null)
+            {
+                throw new JsonExpressionParserException($"There is no variable with name '{variableName}' in the context.");
+            }
+
+            var value = variable.Value.SelectToken("$.value" + jsonPath);
+            if (value == null)
+            {
+                throw new JsonExpressionParserException($"The variable '{variableName}' has no field with path '{jsonPath}'.");
+            }
+
+            return ((JValue)value.Value<object>()).Value;
+        }
+
         private Expression GenerateExpressionForJsonField(string jsonPath)
         {
             var methodInfo = this.GetType().GetMethod("GetJsonField", BindingFlags.Static | BindingFlags.NonPublic);
@@ -161,6 +182,16 @@
             }
 
             return function.CreateExpression(parameters);
+        }
+
+        private Expression GenerateExpressionForVariable(Match match)
+        {
+            var methodInfo = this.GetType().GetMethod("GetVariable", BindingFlags.Static | BindingFlags.NonPublic);
+            return Expression.Call(
+                methodInfo,
+                Expression.Constant(match.Groups[1].Value),
+                Expression.Constant(match.Groups[2].Value),
+                this.currentContextExpression);
         }
 
         #endregion

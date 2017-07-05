@@ -659,6 +659,22 @@
             Assert.AreEqual(49.0, result, 1E-10);
         }
 
+        [TestMethod]
+        public void Should_parse_string_variable()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$x";
+            var func = jsonExpressionParser.CreateFuncFromExpression<string>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+            context.AddVariable("x", "testString");
+
+            var result = func(context);
+
+            Assert.AreEqual("testString", result);
+        }
+
         #endregion
 
         #region Errors Tests
