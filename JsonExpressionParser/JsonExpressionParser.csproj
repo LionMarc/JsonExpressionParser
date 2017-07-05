@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="JsonExpressionParser.cs" />
     <Compile Include="JsonExpressionParserContext.cs" />
+    <Compile Include="JsonExpressionParserException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

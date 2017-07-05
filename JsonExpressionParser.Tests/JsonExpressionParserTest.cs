@@ -39,7 +39,7 @@
 
         #endregion
 
-        #region Tests
+        #region Tests for nominal cases
 
         [TestMethod]
         public void Should_parse_string_simple_field()
@@ -429,6 +429,35 @@
             var result = func(context);
 
             Assert.AreEqual(0.5, result, 1E-10);
+        }
+
+        #endregion
+
+        #region Errors Tests
+
+        [TestMethod]
+        public void Should_throw_a_JsonExpressionParserException_when_requested_field_does_not_exist()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.priceCurrency";
+            var func = jsonExpressionParser.CreateFuncFromExpression<string>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+            var exception = Assert.ThrowsException<JsonExpressionParserException>(() => func(context));
+            Assert.AreEqual("The field with path '$.priceCurrency' does not exist!", exception.Message);
+        }
+
+        [TestMethod]
+        public void Should_throw_a_JsonExpressionParserException_when_trying_to_add_a_number_to_a_string()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "$.currency + 4.0";
+
+            var exception = Assert.ThrowsException<JsonExpressionParserException>(() => jsonExpressionParser.CreateFuncFromExpression<string>(expression));
+
+            Assert.AreEqual("Parsing error of the expression '$.currency + 4.0'", exception.Message);
         }
 
         #endregion

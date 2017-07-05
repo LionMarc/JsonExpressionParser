@@ -51,12 +51,17 @@
 
         public Func<TContext, TResultType> CreateFuncFromExpression<TResultType>(string expression)
         {
-            return this.Expr.End()
-                .Select(body => Expression.Lambda<Func<TContext, TResultType>>(
-                    Expression.Convert(body, typeof(TResultType)),
-                    this.currentContextExpression))
-                .Parse(expression)
-                .Compile();
+            try
+            {
+                return this.Expr.End()
+                    .Select(body => Expression.Lambda<Func<TContext, TResultType>>(Expression.Convert(body, typeof(TResultType)), this.currentContextExpression))
+                    .Parse(expression)
+                    .Compile();
+            }
+            catch (Exception e)
+            {
+                throw new JsonExpressionParserException($"Parsing error of the expression '{expression}'", e);
+            }
         }
 
         #endregion
@@ -94,7 +99,13 @@
 
         private static object GetJsonField(string jsonPath, TContext context)
         {
-            return ((JValue)context.Current.SelectToken(jsonPath).Value<object>()).Value;
+            var value = context.Current.SelectToken(jsonPath);
+            if (value == null)
+            {
+                throw new JsonExpressionParserException($"The field with path '{jsonPath}' does not exist!");
+            }
+
+            return ((JValue)value.Value<object>()).Value;
         }
 
         private Expression GenerateExpressionForJsonField(string jsonPath)
