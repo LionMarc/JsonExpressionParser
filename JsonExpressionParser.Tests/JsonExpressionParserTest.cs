@@ -675,6 +675,38 @@
             Assert.AreEqual("testString", result);
         }
 
+        [TestMethod]
+        public void Should_return_first_item_when_calling_IF_function_with_a_condition_associated_to_variable_with_a_true_value()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "IF($x,69.3, $.realAskPrice)";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+            context.AddVariable("x", true);
+
+            var result = func(context);
+
+            Assert.AreEqual(69.3, result, 1E-10);
+        }
+
+        [TestMethod]
+        public void Should_return_second_item_when_calling_IF_function_with_a_condition_associated_to_variable_with_a_false_value()
+        {
+            var jsonExpressionParser = new JsonExpressionParser<JsonExpressionParserContext>();
+
+            var expression = "IF($x,69.3, $.realAskPrice)";
+            var func = jsonExpressionParser.CreateFuncFromExpression<double>(expression);
+
+            var context = new JsonExpressionParserContext(this.inputData);
+            context.AddVariable("x", false);
+
+            var result = func(context);
+
+            Assert.AreEqual(123.456, result, 1E-10);
+        }
+
         #endregion
 
         #region Errors Tests

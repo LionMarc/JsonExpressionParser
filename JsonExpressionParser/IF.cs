@@ -18,7 +18,7 @@
             if (parameters[1].Type != typeof(object))
             {
                 return Expression.Condition(
-                    parameters[0],
+                    Expression.Convert(parameters[0], typeof(bool)),
                     parameters[1],
                     Expression.Convert(parameters[2], parameters[1].Type));
             }
@@ -26,13 +26,13 @@
             if (parameters[2].Type != typeof(object))
             {
                 return Expression.Condition(
-                    parameters[0],
+                    Expression.Convert(parameters[0], typeof(bool)),
                     Expression.Convert(parameters[1], parameters[2].Type),
                     parameters[2]);
             }
 
             return Expression.Condition(
-                parameters[0],
+                Expression.Convert(parameters[0], typeof(bool)),
                 parameters[1],
                 parameters[2]);
         }
